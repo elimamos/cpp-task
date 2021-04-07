@@ -1,0 +1,14 @@
+{
+  "filters": [
+    {
+      "path": "/area",
+      "op": "gt",
+      "value": 200
+    },
+   {
+      "path": "/population",
+      "op": "gt",
+      "value": 1000000
+    }
+  ]
+}
