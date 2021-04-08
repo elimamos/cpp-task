@@ -1,7 +1,9 @@
+{
 "validator": [
 		{
 		  "path": "/population",
 		  "op": "re",
-		  "value": "\d"
+		  "value": ".*"
 		}
 		]
+}

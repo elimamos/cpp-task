@@ -1,9 +1,9 @@
 {
   "filters": [
 	 {
-      "path": "/voivodeship",
-      "op": "re",
-      "value": "^p.*"
+      "path": "/population",
+      "op": "gt",
+      "value": 100
     }
    
 	
