@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <regex>
 
 using namespace std;
 using json = nlohmann::json;
@@ -72,17 +73,23 @@ class StringFilterObject:public FilterObject{
     };
      void toString(){
 
-        for (auto const& wtf : what_to_filter) {
-                    cout<<"What to filter?:"<< wtf<<&endl;
-            }
+        cout<<"What to filter?:"<< what_to_filter<<&endl;
         cout << "What to do?: "<<comparator<<&endl;
         cout <<"Value is: " << filter_value<<&endl;
     };
      bool filter(json city){
-         return false;
+        regex reg (filter_value);
+        json_pointer p1(what_to_filter);
+        string value_to_check;
+        try {
+                value_to_check=city[p1];
+        }catch (...) {
+            cout <<"Wrong path provided! " <<what_to_filter<< " No such field exists for " << city["city"]<<". Will return false.\n";
+            return false;
+            }
+
+         return regex_match (value_to_check, reg);
     }
-
-
 };
 class MathFilterObject:public FilterObject{
     public:
@@ -170,7 +177,28 @@ class SetFilterObject:public FilterObject{
 
     };
      bool filter(json city){
-         return false;
+        double city_content;
+        json_pointer p1(what_to_filter);
+        try {
+                city_content=city[p1];
+        }catch (...) {
+            cout <<"Wrong path provided! " <<what_to_filter<< " No such field exists for " << city["city"]<<". Will return false.\n";
+            return false;
+        }
+        int comparator_position = getIndex(set_comp_list,comparator);
+        switch(comparator_position) {
+          case 0:
+                if(city_content>=filter_value[0]){
+                     if(city_content<=filter_value[1]){
+                            return true;
+                     }
+                }
+            break;
+          default:
+              cout << "Wrong command provided in json. Please use one of the provided: 'in'"<<&endl;
+        }
+        return false;
+
     }
 
 };
@@ -231,22 +259,25 @@ ParsedFiltersList parseFilters(json filters){
 
                parsedFilters.push_back(new MathFilterObject(path,comparator,value));
           }
-         /*else if (array_contains(comparator,string_comp_list)){
+         else if (array_contains(comparator,string_comp_list)){
              string value = filters[i]["value"];
              cout <<value<<"\n\n" ;
-         }else if(array_contains(comparator,set_comp_list)){
+             parsedFilters.push_back(new StringFilterObject(path,comparator,value));
+         }
+        else if(array_contains(comparator,set_comp_list)){
 
              vector <int> value;
              //cout << to_string(filters[i]["value"]);
              for (auto& current_value : filters[i]["value"]) {
                     value.push_back(current_value);
               }
+             parsedFilters.push_back(new SetFilterObject(path,comparator,value));
          }
          else{
             cout << "'op' value is a not supported format! Please fix your filer file!";
-            return 0;
+            throw new exception();
          }
-*/
+
     //     cout << path<<"|"<<comparator<<"|"<<to_string(value)<<";";
     };
     return parsedFilters;
@@ -263,37 +294,17 @@ list<json> parseCities(json cities){
 
 };
 
-int main()
-{
-    string filepath;
-
-
- //   cout << "Please provide the path to your filter json file:";
-//    cin >> filepath;
-    filepath="filter.json";
-
-    string city_file = file_to_string("cities.json");
-    json city_json_file = json::parse(city_file);
-    json cities_all=city_json_file["cities"];
-    list<json>cities = parseCities(cities_all);
-    for (auto const& i : cities) {
-        std::cout << to_string(i)<<"WOW CITY!!!\n\n";
-    }
-
-
-     string filter_file=file_to_string(filepath);
-     //cout << filter_file<<&endl;
-    json filter_json_file = json::parse(filter_file);
-    json filters=filter_json_file["filters"];
-
-    ParsedFiltersList parsedFilters=parseFilters(filters);
-    list<json> match_cities;
-    for(json city :cities){
+list<json> filterCities(json ct, json ft){
+   list<json>cities = parseCities(ct);
+   ParsedFiltersList parsedFilters=parseFilters(ft);
+   list<json> match_cities;
+     for(json city :cities){
         bool output =false;
         for(ParsedFiltersList::const_iterator f = parsedFilters.begin(),
         endF = parsedFilters.end();
         f != endF;
         ++f){
+
             cout <<city["city"]<<"\n";
             FilterObject *generic_filter = *f;
             generic_filter->toString();
@@ -310,10 +321,63 @@ int main()
     }
 
     }
-    cout << "SUCCESSFUL CITIES HERE WE GOoooooo:"<<"\n";
-    for(json city :match_cities){
-        cout<<city["city"]<<"\n";
+   return match_cities;
+}
+
+int main()
+{
+    string filepath;
+
+
+ //   cout << "Please provide the path to your filter json file:";
+//    cin >> filepath;
+    filepath="filter.json";
+
+    string city_file = file_to_string("cities.json");
+    json cities_all;
+    json city_json_file;
+    try{
+         city_json_file = json::parse(city_file);
+         cities_all=city_json_file["cities"];
+    }catch (...){
+        cout <<"WOW! WRONG JSON MAN"<<"\n";
     }
+
+
+    string filter_file=file_to_string(filepath);
+     //cout << filter_file<<&endl;
+    json filter_json_file = json::parse(filter_file);
+    json filters=filter_json_file["filters"];
+    list<json> foundCities=filterCities(cities_all,filters);
+    for (json city: foundCities){
+        cout <<city["city"]<<"\n";
+    }
+  /*  string validator_path="validator.json";
+    string validator_file = file_to_string(validator_path);
+    json validator_json_file = json::parse(validator_file);
+    json validator_all=validator_json_file["validator"];
+    ParsedFiltersList validator_list=parseFilters(validator_all);*/
+   /*  for(ParsedFiltersList::const_iterator valid = validator_list.begin(),
+                endV = validator_list.end();
+                valid != endV;
+                ++valid){
+                FilterObject *validator= *valid;
+
+                if(!validator->filter(city)){
+                    cout <<"Input City Json does not fultill provided validator rules\n";
+                    return 1;
+                }
+            }
+    /*
+    for (json valid : validator_all){
+        string path = valid["path"];
+        string op = valid["op"];
+        string value =valid["value"];
+        validator_list.push_back(new StringFilterObject(path,op,value));
+         //   if(filter(valid))
+    }*/
+
+
    //    // to_string()
 
     /*for (json::iterator it = filter1.begin(); it != filter1.end(); ++it) {
