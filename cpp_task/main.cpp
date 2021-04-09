@@ -6,22 +6,16 @@
 #include <list>
 #include <regex>
 #include <algorithm>
-#include <cctype>
-#include <locale.h>
-#include <fcntl.h>
-#include <io.h>
-#include <string>
-#include <stdio.h>
 
 using namespace std;
+
+//https://github.com/nlohmann/json
 using json = nlohmann::json;
 using json_pointer=nlohmann::json::json_pointer;
 //Possible types of filters sorted into 3 groups string operations, mathematical operations and operations on sets
 vector<string> string_comp_list= {"re"};
 vector<string> math_comp_list= {"eq","ge","le","lt","gt"};
 vector<string> set_comp_list= {"in"};
-//list of filter object can contain string, math and set typo of filters
-typedef std::list<FilterObject*> ParsedFiltersList;
 
 //translate the given list value into the list index to be used in the switch
 int getIndex(vector<string> v, string K)
@@ -221,6 +215,8 @@ public:
         return false;
     }
 };
+//list of filter object can contain string, math and set type of filters
+typedef std::list<FilterObject*> ParsedFiltersList;
 
 //Reads file and saves it's content into a string
 string file_to_string(string filename)
