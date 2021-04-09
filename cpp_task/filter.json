@@ -1,9 +1,9 @@
 {
   "filters": [
 	 {
-      "path": "/population",
+      "path": "/recreations/parks",
       "op": "gt",
-      "value": 100
+      "value": 3
     }
    
 	

@@ -1,0 +1,1 @@
+{"area":5.2,"city":"Brusy","country":"chojnicki","population":5209,"population_density":1002,"recreations":{"parks":12},"voivodeship":"pomorskie"}

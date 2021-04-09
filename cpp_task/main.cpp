@@ -5,10 +5,18 @@
 #include <vector>
 #include <list>
 #include <regex>
+#include <algorithm>
+#include <cctype>
+#include <locale.h>
+#include <fcntl.h>
+#include <io.h>
+#include <string>
+#include <stdio.h>
 
 using namespace std;
 using json = nlohmann::json;
 using json_pointer=nlohmann::json::json_pointer;
+
 vector<string> string_comp_list= {"re"};
 vector<string> math_comp_list= {"eq","ge","le","lt","gt"};
 vector<string> set_comp_list= {"in"};
@@ -83,11 +91,10 @@ public:
         json_pointer p1(what_to_filter);
         string value_to_check;
         try
-        {    json v = city[p1];
-
+        {
+            json v = city[p1];
             value_to_check=to_string(v);
-            cout<< value_to_check<<&endl;
-        }
+           }
         catch (...)
         {
             cout <<"Wrong path provided! " <<what_to_filter<< " No such field exists for " << city["city"]<<". Will return false.\n";
@@ -109,9 +116,7 @@ public:
     };
     void toString()
     {
-
         cout<<"What to filter?:"<< what_to_filter<<&endl;
-
         cout << "What to do?: "<<comparator<<&endl;
         cout <<"Value is: " << filter_value<<&endl;
     };
@@ -129,7 +134,6 @@ public:
             return false;
         }
 
-        cout <<"city content:"<<city_content<<"\n";
         int comparator_position = getIndex(math_comp_list,comparator);
         switch(comparator_position)
         {
@@ -227,22 +231,39 @@ public:
             cout << "Wrong command provided in json. Please use one of the provided: 'in'"<<&endl;
         }
         return false;
-
     }
-
 };
 
+string EscapeForRegularExpression(const string &s)
+{
+    static const char metacharacters[] = R"(\)";
+    string out;
+    out.reserve(s.size());
+    for (auto ch : s)
+    {
+        if (strchr(metacharacters, ch))
+            out.push_back('\\');
+        out.push_back(ch);
+    }
+    return out;
+}
 
 string file_to_string(string filename)
 {
-    ifstream file_stream(filename);
-    string line="";
     string file="";
+
+    ifstream file_stream(filename);
+    if(file_stream.fail())
+    {
+        throw("An exception happened when reading the file.\n");
+    };
+    string line="";
     while (getline (file_stream, line))
     {
-        // Output the text from the file
+
         file+=line+"\n";
     }
+    file_stream.close();
     return file;
 };
 bool array_contains(string argument, vector<string> value_array)
@@ -262,8 +283,6 @@ bool array_contains(string argument, vector<string> value_array)
 
 ParsedFiltersList parseFilters(json filters)
 {
-
-
     int size= filters.size();
     ParsedFiltersList parsedFilters;
 
@@ -283,7 +302,6 @@ ParsedFiltersList parseFilters(json filters)
         else if (array_contains(comparator,string_comp_list))
         {
             string value = filters[i]["value"];
-            // cout <<value<<"\n\n" ;
             parsedFilters.push_back(new StringFilterObject(path,comparator,value));
         }
         else if(array_contains(comparator,set_comp_list))
@@ -302,8 +320,6 @@ ParsedFiltersList parseFilters(json filters)
             cout << "'op' value is a not supported format! Please fix your filer file!";
             throw new exception();
         }
-
-
     };
     return parsedFilters;
 };
@@ -318,7 +334,6 @@ list<json> parseCities(json cities)
         cityList.push_back(city);
     }
     return cityList;
-
 };
 
 list<json> filterCities(json ct, json ft)
@@ -334,24 +349,18 @@ list<json> filterCities(json ct, json ft)
                 f != endF;
                 ++f)
         {
-            cout<<city["city"]<<&endl;
-            // cout <<city["city"]<<"\n";
-            FilterObject *generic_filter = *f;
-            //    generic_filter->toString();
 
+            FilterObject *generic_filter = *f;
             output = generic_filter->filter(city);
-            cout <<to_string(output)<<&endl;
             if(!output)
             {
                 break;
             }
-
         }
         if(output)
         {
             match_cities.push_back(city);
         }
-
     }
 
     return match_cities;
@@ -370,65 +379,149 @@ bool validateCities(json ct, json ft)
                 ++f)
         {
 
-            //    cout <<city["city"]<<"\n";
             FilterObject *generic_filter = *f;
-
-
             output = generic_filter->filter(city);
-            // cout <<to_string(output)<<&endl;
             if(!output)
             {
-                cout<<"ERROR! Input data is incorrect!\n"<<to_string(city);
+                cout<<"ERROR! Input data is incorrect!\n"<<to_string(city)<<"\n";
                 generic_filter->toString();
                 return false;
             }
-
         }
-
     }
-    cout <<"Valid Json!";
+    cout <<"Valid Json!\n";
     return true;
 
 }
+static inline void ltrim(std::string &s)
+{
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch)
+    {
+        return !std::isspace(ch);
+    }));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string &s)
+{
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch)
+    {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+
+static inline void trim(std::string  &s)
+{
+    ltrim(s);
+    rtrim(s);
+}
+string readUserInputFile(string defaultValue, bool isValidator)
+{
+    string filepath;
+    bool success_read=false;
+    string file;
+    cout<<">";
+    while(!success_read)
+    {
+        getline(cin,filepath);
+        trim(filepath);
+        if(filepath.empty())
+        {
+            if(isValidator)
+            {
+                cout <<"Validator path was empty. Will not perform pre-validation.\n";
+                return "";
+            }
+            cout<<"Using default value -> "<<defaultValue<<"\n";
+            filepath=defaultValue;
+        }
+        try
+        {
+
+            file = file_to_string(filepath);
+            success_read=true;
+        }
+        catch(...)
+        {
+            cout << "Oh! Something went wrong! Could not read file! Please try again.\n";
+            cout<<">";
+        }
+    }
+    return file;
+}
+
 int main()
 {
     string filepath;
+    string citypath;
+    bool success_read=false;
+    string city_file;
+    string filter_file;
+    string validator_file ;
+    cout <<"Welcome to the city filter!\nPlease provide a full path to your city JSON file. \nLeaving this empty will look for the default value which is set to 'cities.json' in the same directory.\n";
+    city_file=readUserInputFile("cities.json",false);
+    cout << "Please provide a full path to your filter JSON file.\nLeaving this empty will look for the default value which is set to 'filter.json' in the same directory.\n";
+    filter_file=readUserInputFile("filter.json",false);
+    cout << "Please provide a full path to your validator JSON file.\nLeaving this empty will skip the json validation of cities.\n";
+    validator_file=readUserInputFile("validator.json",true);
 
-    filepath="filter.json";
-
-    string city_file = file_to_string("cities.json");
     json cities_all;
     json city_json_file;
+    json validator_json_file;
+    json validator_all;
+    json filter_json_file;
+    json filters;
     try
     {
         city_json_file = json::parse(city_file);
         cities_all=city_json_file["cities"];
     }
-    catch (...)
+    catch (exception& e)
     {
-        cout <<"WOW! WRONG JSON MAN"<<"\n";
+        cout <<"\nCity Json seems to be invalid!"<<"\n";
+        cout << e.what() << '\n';
+    }
+    try
+    {
+        filter_json_file = json::parse(filter_file);
+        filters=filter_json_file["filters"];
+    }
+    catch (exception& e)
+    {
+        cout <<"\nFitler Json seems to be invalid!"<<"\n";
+        cout << e.what() << '\n';
+    }
+    if(!validator_file.empty())
+    {
+        cout << "Cities content validation.\n";
+        try
+        {
+            validator_json_file = json::parse(validator_file);
+            validator_all=validator_json_file["validator"];
+        }
+        catch (exception& e)
+        {
+            cout <<"\nValidator Json seems to be invalid!"<<"\n";
+            cout << e.what() << '\n';
+        }
+
+        if(!validateCities(cities_all,validator_all))
+        {
+            return -1;
+        }
     }
 
-    string validator_path="validator.json";
-    string validator_file = file_to_string(validator_path);
-    json validator_json_file = json::parse(validator_file);
-    json validator_all=validator_json_file["validator"];
-
-
-    string filter_file=file_to_string(filepath);
-    json filter_json_file = json::parse(filter_file);
-    json filters=filter_json_file["filters"];
-    if(!validateCities(cities_all,validator_all))
-    {
-        return -1;
-    }
     list<json> foundCities= filterCities(cities_all,filters);
+    cout << "\n";
+    cout << foundCities.size()<<" cities were found with this filter set.\n";
+    cout <<"\nFiltered cities to be found under 'found_cities.txt'\n";
+    ofstream outputFile("found_cities.txt", std::ios_base::out);
 
-    cout <<"\nFiltered cities: \n";
     for (json city: foundCities)
     {
-        cout <<city["city"]<<"\n";
+        outputFile << city;
+        outputFile <<"\n";
     }
-
+    outputFile.close();
     return 0;
 }

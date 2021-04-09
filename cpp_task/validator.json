@@ -1,9 +1,14 @@
 {
 "validator": [
 		{
+		  "path": "/area",
+		  "op": "re",
+		  "value": "\\d+\\.{0,1}\\d+"
+		},
+		{
 		  "path": "/population",
 		  "op": "re",
-		  "value": ".*"
+		  "value": "\\d+"
 		}
 		]
 }

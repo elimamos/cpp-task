@@ -1,6 +1,6 @@
 {
 	"cities": [{
-			"city": "Białystok",
+			"city": "Bialystok",
 			"country": "Białystok",
 			"voivodeship": "podlaskie",
 			"area": 102.13,
@@ -34,7 +34,7 @@
 			"country": "Bydgoszcz",
 			"voivodeship": "kujawsko-pomorskie",
 			"area": 175.98,
-			"population": 352313.1,
+			"population": 3523131,
 			"population_density": 2002
 		},
 		{
@@ -185,7 +185,7 @@
 			"city": "wrocław",
 			"country": "Wrocław",
 			"voivodeship": "dolnośląskie",
-			"area": -292.82,
+			"area": 292.82,
 			"population": 638586,
 			"population_density": 2181
 		}

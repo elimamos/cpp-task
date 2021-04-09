@@ -183,7 +183,7 @@
 	<vector>
 	<string_view>
 
-1617902440 source:c:\users\elisa\onedrive\pulpit\adva\cpp_task\cpp-task\cpp_task\main.cpp
+1617973610 source:c:\users\elisa\onedrive\pulpit\adva\cpp_task\cpp-task\cpp_task\main.cpp
 	<iostream>
 	<fstream>
 	"json.hpp"
@@ -191,6 +191,13 @@
 	<vector>
 	<list>
 	<regex>
+	<algorithm>
+	<cctype>
+	<locale.h>
+	<fcntl.h>
+	<io.h>
+	<string>
+	<stdio.h>
 
 1617083428 c:\users\elisa\onedrive\pulpit\adva\cpp_task\cpp-task\cpp_task\json.hpp
 	<algorithm>
