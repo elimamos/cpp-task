@@ -16,11 +16,14 @@
 using namespace std;
 using json = nlohmann::json;
 using json_pointer=nlohmann::json::json_pointer;
-
+//Possible types of filters sorted into 3 groups string operations, mathematical operations and operations on sets
 vector<string> string_comp_list= {"re"};
 vector<string> math_comp_list= {"eq","ge","le","lt","gt"};
 vector<string> set_comp_list= {"in"};
+//list of filter object can contain string, math and set typo of filters
+typedef std::list<FilterObject*> ParsedFiltersList;
 
+//translate the given list value into the list index to be used in the switch
 int getIndex(vector<string> v, string K)
 {
     auto it = find(v.begin(), v.end(), K);
@@ -34,27 +37,7 @@ int getIndex(vector<string> v, string K)
         return -1;
     }
 }
-class CityObject
-{
-public:
-    string city_name;
-    string country;
-    string voivodeship;
-    double area;
-    long population;
-    int population_density;
-
-    CityObject(   string city_name,string country,string voivodeship,double area,long population,int population_density)
-    {
-        this-> city_name=city_name;
-        this-> country=country;
-        this-> voivodeship=voivodeship;
-        this-> area=area;
-        this-> population=population;
-        this-> population_density=population_density;
-    };
-
-};
+//Generic filter object class used as interface
 class FilterObject
 {
 public:
@@ -68,6 +51,8 @@ public:
     virtual void toString()=0;
     virtual bool filter(json city)=0;
 };
+
+//Filter object to perform string operations
 class StringFilterObject:public FilterObject
 {
 public:
@@ -104,6 +89,8 @@ public:
         return regex_match(value_to_check, reg);
     }
 };
+
+//Filter object to perform mathematical operations
 class MathFilterObject:public FilterObject
 {
 public:
@@ -177,8 +164,9 @@ public:
     }
 
 };
-typedef std::list<FilterObject*> ParsedFiltersList;
 
+
+//Filter object to perform string operations
 class SetFilterObject:public FilterObject
 {
 public:
@@ -234,20 +222,7 @@ public:
     }
 };
 
-string EscapeForRegularExpression(const string &s)
-{
-    static const char metacharacters[] = R"(\)";
-    string out;
-    out.reserve(s.size());
-    for (auto ch : s)
-    {
-        if (strchr(metacharacters, ch))
-            out.push_back('\\');
-        out.push_back(ch);
-    }
-    return out;
-}
-
+//Reads file and saves it's content into a string
 string file_to_string(string filename)
 {
     string file="";
@@ -266,6 +241,7 @@ string file_to_string(string filename)
     file_stream.close();
     return file;
 };
+//check if array contains specific string
 bool array_contains(string argument, vector<string> value_array)
 {
     int arraySize=value_array.size();
@@ -280,7 +256,7 @@ bool array_contains(string argument, vector<string> value_array)
     }
     return false;
 };
-
+//creates proper filter object based on "op" value and lists defined on top of this file
 ParsedFiltersList parseFilters(json filters)
 {
     int size= filters.size();
@@ -295,8 +271,6 @@ ParsedFiltersList parseFilters(json filters)
         if(array_contains(comparator,math_comp_list))
         {
             int value =filters[i]["value"];
-            // cout <<value <<"\n\n";
-
             parsedFilters.push_back(new MathFilterObject(path,comparator,value));
         }
         else if (array_contains(comparator,string_comp_list))
@@ -323,6 +297,7 @@ ParsedFiltersList parseFilters(json filters)
     };
     return parsedFilters;
 };
+// cuts the city json into seperate jsons with individual cities
 list<json> parseCities(json cities)
 {
     int size= cities.size();
@@ -335,7 +310,7 @@ list<json> parseCities(json cities)
     }
     return cityList;
 };
-
+//perform filtration on each city all filters and return list of cities that meet all requirements
 list<json> filterCities(json ct, json ft)
 {
     list<json>cities = parseCities(ct);
@@ -351,6 +326,7 @@ list<json> filterCities(json ct, json ft)
         {
 
             FilterObject *generic_filter = *f;
+            // will filter differently depending on what type of filter object we're using
             output = generic_filter->filter(city);
             if(!output)
             {
@@ -365,6 +341,7 @@ list<json> filterCities(json ct, json ft)
 
     return match_cities;
 }
+//use validator json and check if the values are logical. Set of filters can be extended and changed freely
 bool validateCities(json ct, json ft)
 {
     list<json>cities = parseCities(ct);
@@ -393,6 +370,8 @@ bool validateCities(json ct, json ft)
     return true;
 
 }
+
+//some trimming for input content
 static inline void ltrim(std::string &s)
 {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch)
@@ -415,6 +394,8 @@ static inline void trim(std::string  &s)
     ltrim(s);
     rtrim(s);
 }
+
+//Read user input in a standarised way
 string readUserInputFile(string defaultValue, bool isValidator)
 {
     string filepath;
@@ -458,11 +439,11 @@ int main()
     string city_file;
     string filter_file;
     string validator_file ;
-    cout <<"Welcome to the city filter!\nPlease provide a full path to your city JSON file. \nLeaving this empty will look for the default value which is set to 'cities.json' in the same directory.\n";
+    cout <<"Welcome to the *city* filter!\nPlease your city JSON filename which should be places in the root dir of this project. \nLeaving this empty will look for the default value which is set to 'cities.json' in the same directory.\n";
     city_file=readUserInputFile("cities.json",false);
-    cout << "Please provide a full path to your filter JSON file.\nLeaving this empty will look for the default value which is set to 'filter.json' in the same directory.\n";
+    cout << "Please your *filter* JSON filename which should be places in the root dir of this project.\nLeaving this empty will look for the default value which is set to 'filter.json' in the same directory.\n";
     filter_file=readUserInputFile("filter.json",false);
-    cout << "Please provide a full path to your validator JSON file.\nLeaving this empty will skip the json validation of cities.\n";
+    cout << "Please your *validator* JSON filename which should be places in the root dir of this project.\nLeaving this empty will skip the json validation of cities.\n";
     validator_file=readUserInputFile("validator.json",true);
 
     json cities_all;
