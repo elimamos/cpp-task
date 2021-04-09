@@ -1,0 +1,7 @@
+C:/Users/elisa/OneDrive/Pulpit/adva/cpp_task/cpp-task/cpp_task/Build/CMakeFiles/list_install_components.dir
+C:/Users/elisa/OneDrive/Pulpit/adva/cpp_task/cpp-task/cpp_task/Build/CMakeFiles/cpp_task.dir
+C:/Users/elisa/OneDrive/Pulpit/adva/cpp_task/cpp-task/cpp_task/Build/CMakeFiles/install/local.dir
+C:/Users/elisa/OneDrive/Pulpit/adva/cpp_task/cpp-task/cpp_task/Build/CMakeFiles/install.dir
+C:/Users/elisa/OneDrive/Pulpit/adva/cpp_task/cpp-task/cpp_task/Build/CMakeFiles/edit_cache.dir
+C:/Users/elisa/OneDrive/Pulpit/adva/cpp_task/cpp-task/cpp_task/Build/CMakeFiles/rebuild_cache.dir
+C:/Users/elisa/OneDrive/Pulpit/adva/cpp_task/cpp-task/cpp_task/Build/CMakeFiles/install/strip.dir
